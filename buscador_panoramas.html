@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Panoramas - Santiago</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .search-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .date-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tab:hover {
+            border-color: #667eea;
+        }
+
+        .events-list {
+            display: none;
+        }
+
+        .events-list.active {
+            display: block;
+        }
+
+        .event-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .event-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .event-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .event-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-free {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-paid {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .event-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .event-link:hover {
+            background: #764ba2;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .date-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Buscador de Panoramas en Santiago</h1>
+            <p class="subtitle">Encuentra eventos gratuitos y pagados en la ciudad</p>
+        </div>
+
+        <div class="search-panel">
+            <h2 style="margin-bottom: 20px;">📅 Selecciona el rango de fechas</h2>
+            <div class="date-inputs">
+                <div class="form-group">
+                    <label for="fechaInicio">Fecha Inicio</label>
+                    <input type="date" id="fechaInicio">
+                </div>
+                <div class="form-group">
+                    <label for="fechaFin">Fecha Fin</label>
+                    <input type="date" id="fechaFin">
+                </div>
+            </div>
+            <button class="search-btn" onclick="buscarEventos()">
+                🔍 Buscar Panoramas
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Buscando eventos en todas las páginas...</p>
+            <p style="color: #666; margin-top: 10px;">Esto puede tomar unos segundos</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalEventos">0</div>
+                    <div class="stat-label">Total Eventos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="eventosGratis">0</div>
+                    <div class="stat-label">🎁 Gratis</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="eventosPagados">0</div>
+                    <div class="stat-label">💰 Pagados</div>
+                </div>
+            </div>
+
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportarCSV()">📊 Exportar a CSV</button>
+                <button class="export-btn" onclick="exportarJSON()">💾 Exportar a JSON</button>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="cambiarTab('todos')">Todos los Eventos</div>
+                <div class="tab" onclick="cambiarTab('gratis')">🎁 Eventos Gratis</div>
+                <div class="tab" onclick="cambiarTab('pagados')">💰 Eventos Pagados</div>
+            </div>
+
+            <div id="eventos-todos" class="events-list active"></div>
+            <div id="eventos-gratis" class="events-list"></div>
+            <div id="eventos-pagados" class="events-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let eventosGratuitos = [];
+        let eventosPagados = [];
+
+        // Establecer fechas por defecto (hoy y una semana después)
+        window.onload = function() {
+            const hoy = new Date();
+            const unaSemana = new Date();
+            unaSemana.setDate(hoy.getDate() + 7);
+
+            document.getElementById('fechaInicio').valueAsDate = hoy;
+            document.getElementById('fechaFin').valueAsDate = unaSemana;
+        };
+
+        function cambiarTab(tab) {
+            // Actualizar tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Mostrar contenido
+            document.querySelectorAll('.events-list').forEach(list => list.classList.remove('active'));
+            document.getElementById('eventos-' + tab).classList.add('active');
+        }
+
+        async function buscarEventos() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+
+            if (!fechaInicio || !fechaFin) {
+                alert('Por favor selecciona ambas fechas');
+                return;
+            }
+
+            // Mostrar loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+
+            try {
+                // Llamar al backend real
+                const response = await fetch('http://localhost:5001/api/buscar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fechaInicio: fechaInicio,
+                        fechaFin: fechaFin
+                    })
+                });
+
+                const resultado = await response.json();
+
+                if (resultado.success) {
+                    eventosGratuitos = resultado.data.gratuitos;
+                    eventosPagados = resultado.data.pagados;
+
+                    // Ocultar loading y mostrar resultados
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('results').classList.add('active');
+
+                    // Actualizar estadísticas
+                    actualizarEstadisticas();
+
+                    // Mostrar eventos
+                    mostrarEventos();
+                } else {
+                    throw new Error(resultado.error || 'Error en la búsqueda');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').classList.remove('active');
+                alert('Error al buscar eventos. Verifica que el servidor esté ejecutándose.\n\nError: ' + error.message);
+            }
+        }
+
+        function actualizarEstadisticas() {
+            const total = eventosGratuitos.length + eventosPagados.length;
+            document.getElementById('totalEventos').textContent = total;
+            document.getElementById('eventosGratis').textContent = eventosGratuitos.length;
+            document.getElementById('eventosPagados').textContent = eventosPagados.length;
+        }
+
+        function mostrarEventos() {
+            // Todos los eventos
+            const todosList = document.getElementById('eventos-todos');
+            todosList.innerHTML = '';
+            
+            [...eventosGratuitos, ...eventosPagados].forEach(evento => {
+                todosList.innerHTML += crearCardEvento(evento);
+            });
+
+            // Eventos gratis
+            const gratisList = document.getElementById('eventos-gratis');
+            gratisList.innerHTML = '';
+            eventosGratuitos.forEach(evento => {
+                gratisList.innerHTML += crearCardEvento(evento);
+            });
+
+            // Eventos pagados
+            const pagadosList = document.getElementById('eventos-pagados');
+            pagadosList.innerHTML = '';
+            eventosPagados.forEach(evento => {
+                pagadosList.innerHTML += crearCardEvento(evento);
+            });
+        }
+
+        function crearCardEvento(evento) {
+            const esGratis = evento.precio === 'GRATIS' || evento.precio.includes('Varía');
+            const badgeClass = esGratis ? 'badge-free' : 'badge-paid';
+            const emoji = esGratis ? '🎁' : '💰';
+
+            return `
+                <div class="event-card">
+                    <div class="event-title">${evento.titulo}</div>
+                    <div class="event-info">
+                        <div class="event-detail">
+                            <span>📍</span>
+                            <span><strong>Fuente:</strong> ${evento.fuente}</span>
+                        </div>
+                        <div class="event-detail">
+                            <span>📅</span>
+                            <span><strong>Fecha:</strong> ${evento.fecha}</span>
+                        </div>
+                        <div class="event-detail">
+                            <span>${emoji}</span>
+                            <span><strong>Precio:</strong> <span class="badge ${badgeClass}">${evento.precio}</span></span>
+                        </div>
+                    </div>
+                    <a href="${evento.link}" target="_blank" class="event-link">Ver más información →</a>
+                </div>
+            `;
+        }
+
+        function exportarCSV() {
+            const todos = [...eventosGratuitos, ...eventosPagados];
+            let csv = 'Tipo,Título,Fuente,Fecha,Precio,Link\n';
+            
+            todos.forEach(evento => {
+                const tipo = evento.precio === 'GRATIS' ? 'GRATIS' : 'PAGADO';
+                csv += `"${tipo}","${evento.titulo}","${evento.fuente}","${evento.fecha}","${evento.precio}","${evento.link}"\n`;
+            });
+
+            descargarArchivo(csv, 'panoramas_santiago.csv', 'text/csv');
+        }
+
+        function exportarJSON() {
+            const datos = {
+                gratuitos: eventosGratuitos,
+                pagados: eventosPagados,
+                total: eventosGratuitos.length + eventosPagados.length
+            };
+
+            descargarArchivo(JSON.stringify(datos, null, 2), 'panoramas_santiago.json', 'application/json');
+        }
+
+        function descargarArchivo(contenido, nombreArchivo, tipo) {
+            const blob = new Blob([contenido], { type: tipo });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
